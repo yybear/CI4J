@@ -1,0 +1,27 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+	<display-name>Archetype Created Web Application</display-name>
+	<filter>
+		<filter-name>CI4JFilter</filter-name>
+		<display-name>CI4JFilter</display-name>
+		<description></description>
+		<filter-class>org.ci4j.web.CI4JFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>CI4JFilter</filter-name>
+		<url-pattern>/CI4JFilter</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>ci4jServlet</servlet-name>
+		<servlet-class>org.ci4j.web.CI4JServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ci4jServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+</web-app>
