@@ -6,8 +6,16 @@ import java.util.logging.Logger;
 public class LogUtils {
 	public static final Logger getLogger(String name) {
 		Logger logger = Logger.getLogger(name);
-		logger.setLevel(Level.INFO);
+		logger.setLevel(Level.CONFIG);
 		return logger;
+	}
+	
+	public static final void config(Logger logger, String strFormat, Object... args) {
+		logger.config(String.format(strFormat, args));
+	}
+	
+	public static final void config(Logger logger, String msg) {
+		logger.config(msg);
 	}
 	
 	public static final void info(Logger logger, String strFormat, Object... args) {

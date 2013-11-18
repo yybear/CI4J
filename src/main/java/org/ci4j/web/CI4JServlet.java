@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.Enumeration;
@@ -53,7 +54,7 @@ public class CI4JServlet extends HttpServlet {
 	 * 静态文件目录
 	 */
 	private static final String ASSETS_DIR = "/assets";
-	
+
 	private static final String COMMON_DEFAULT_SERVLET_NAME = "default";
 
 	/**
@@ -102,7 +103,14 @@ public class CI4JServlet extends HttpServlet {
 
 				Method[] methods = controller.getDeclaredMethods();
 				for (Method method : methods) {
-					Action action = new Action(controllerObj, method);
+					// 只有public void 非static final的方法才可以是action，其他的忽略
+					int mod = method.getModifiers();
+					if (!Modifier.isPublic(mod)
+							|| !method.getReturnType().equals(Void.TYPE))
+						continue;
+
+					Action action = new Action(controllerObj, method,
+							getParameterTypes(method));
 
 					Path path = method.getAnnotation(Path.class);
 					if (null != path) {
@@ -116,7 +124,7 @@ public class CI4JServlet extends HttpServlet {
 						if (INDEX_ACTION.equals(methodName)) { // index方法为controller的默认方法
 							actionMap.put(sb.toString(), action);
 						}
-						
+
 						actionMap.put(sb.append(URL_SEQ).append(methodName)
 								.toString(), action);
 					}
@@ -125,8 +133,20 @@ public class CI4JServlet extends HttpServlet {
 		} catch (InstantiationException | IllegalAccessException e) {
 			LogUtils.severe(logger, e.getMessage(), e);
 		}
-		
+
 		LogUtils.info(logger, actionMap.keySet().toString());
+	}
+
+	private static Class<?>[] getParameterTypes(Method method) {
+		Class<?>[] types = method.getParameterTypes();
+		if (types != null && types.length > 0) {
+			for (Class<?> t : types)
+				LogUtils.info(logger, "method %s parameter %s",
+						method.getName(), t.getName());
+			return types;
+		} else {
+			return null;
+		}
 	}
 
 	private static String lowCaseFirstChar(String str) {
@@ -186,7 +206,6 @@ public class CI4JServlet extends HttpServlet {
 	@Override
 	public void service(ServletRequest req, ServletResponse res)
 			throws ServletException, IOException {
-		// super.service(req, res);
 		// 将request 和response放到threadload里面
 		Context context = Context.getContext();
 		HttpServletRequest request = (HttpServletRequest) req;
@@ -199,13 +218,14 @@ public class CI4JServlet extends HttpServlet {
 		LogUtils.info(logger, "servletPath is %s", servletPath);
 
 		Action action = null;
-		Object[] args = new Object[0];
+		String[] args = null;
 		if (StringUtils.isBlank(servletPath)) {
 			// 首页
 			action = actionMap.get(URL_SEQ + INDEX_CONTROLLER);
 		} else if (StringUtils.startsWith(servletPath, ASSETS_DIR)) {
 			// 静态文件
-			RequestDispatcher rd = this.getServletContext().getNamedDispatcher(COMMON_DEFAULT_SERVLET_NAME);
+			RequestDispatcher rd = this.getServletContext().getNamedDispatcher(
+					COMMON_DEFAULT_SERVLET_NAME);
 			rd.forward(request, response);
 		} else {
 			String[] strs = StringUtils.split(servletPath, '/');
@@ -217,7 +237,7 @@ public class CI4JServlet extends HttpServlet {
 			}
 
 			if (size > 2) { // rest方式参数
-				args = new Object[size - 2];
+				args = new String[size - 2];
 				for (int i = 2; i < size; i++) {
 					args[i - 2] = strs[i];
 				}
@@ -228,12 +248,46 @@ public class CI4JServlet extends HttpServlet {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else {
 			try {
-				action.work(args);
+				action.work(convertParameters(action.getParameterTypes(),
+						request, response, args));
 			} catch (IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				LogUtils.severe(logger, e.getMessage(), e);
 				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			}
 		}
+		
+	}
+
+	private Object[] convertParameters(Class<?>[] types,
+			HttpServletRequest request, HttpServletResponse response,
+			String[] args) {
+		Object[] parameters = new Object[0];
+		// Class<?>[] types = action.getParameterTypes();
+		if (types != null) {
+			parameters = new Object[types.length];
+			int i = 0;
+			// action有参数，根据参数类型设置参数
+			for (Class<?> type : types) {
+				if (type == HttpServletRequest.class)
+					parameters[i] = request;
+				else if (type == HttpServletResponse.class)
+					parameters[i] = response;
+				else if (type == String.class)
+					parameters[i] = (String) args[i];
+				else if (type == Integer.class || type == int.class)
+					parameters[i] = Integer.valueOf((String) args[i]);
+				else if (type == Long.class || type == long.class)
+					parameters[i] = Long.valueOf((String) args[i]);
+				else if (type == Short.class || type == short.class)
+					parameters[i] = Short.valueOf((String) args[i]);
+				else if (type == Float.class || type == float.class)
+					parameters[i] = Float.valueOf((String) args[i]);
+				else if (type == Double.class || type == double.class)
+					parameters[i] = Double.valueOf((String) args[i]);
+				i++;
+			}
+		}
+		return parameters;
 	}
 }
