@@ -29,6 +29,10 @@ public class JspView extends View{
 	}
 	
 	public void load(String view, Model model) {
+		for(String key : model.getValues().keySet()) {
+			request.setAttribute(key, model.getValues().get(key));
+		}
 		
+		load(view);
 	}
 }

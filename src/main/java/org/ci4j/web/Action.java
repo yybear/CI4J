@@ -12,6 +12,10 @@ public class Action {
 
 	private Method method;
 	
+	public Method getMethod() {
+		return method;
+	}
+
 	private Class<?>[] parameterTypes;
 
 	public Action(Object controller, Method method, Class<?>[] parameterTypes) {

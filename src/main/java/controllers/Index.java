@@ -11,6 +11,8 @@ import org.ci4j.web.render.JspView;
 public class Index extends Controller {
 	private static final Logger logger = LogUtils.getLogger(Index.class.getName());
 	public void index() {
+		
+		
 		JspView view = new JspView();
 		view.load("index");
 	}

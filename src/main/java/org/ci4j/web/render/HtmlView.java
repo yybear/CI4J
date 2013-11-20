@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.Logger;
 
+import javax.naming.OperationNotSupportedException;
+
 
 import org.ci4j.util.LogUtils;
 
@@ -26,14 +28,10 @@ public class HtmlView extends View{
 	        
 			response.setContentType("text/html;charset=UTF-8");
 	        writer = response.getWriter();
-	        writer.write("test html");
+	        writer.write(view);
 	        writer.flush();
 		} catch (IOException e) {
-			//throw new RenderException(e);
+			LogUtils.severe(logger, e.getMessage(), e);
 		}
-	}
-	
-	public void load(String view, Model model) {
-		
 	}
 }

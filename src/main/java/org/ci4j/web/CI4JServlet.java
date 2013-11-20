@@ -3,7 +3,6 @@ package org.ci4j.web;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -17,7 +16,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -25,11 +23,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.ci4j.core.Context;
 import org.ci4j.util.LogUtils;
 import org.ci4j.web.annotation.Path;
+//import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
+//import org.springframework.core.ParameterNameDiscoverer;
+import org.ci4j.web.upload.MultipartRequest;
 
 @SuppressWarnings("serial")
 public class CI4JServlet extends HttpServlet {
@@ -128,6 +128,11 @@ public class CI4JServlet extends HttpServlet {
 						actionMap.put(sb.append(URL_SEQ).append(methodName)
 								.toString(), action);
 					}
+					
+					/*ParameterNameDiscoverer pnd = new LocalVariableTableParameterNameDiscoverer();
+					String[] names = pnd.getParameterNames(method);
+					if(names != null && names.length > 0)
+						LogUtils.info(logger, "names is "+ names[0] + "," + names[1] + "," + names[2]);*/
 				}
 			}
 		} catch (InstantiationException | IllegalAccessException e) {
@@ -135,6 +140,9 @@ public class CI4JServlet extends HttpServlet {
 		}
 
 		LogUtils.info(logger, actionMap.keySet().toString());
+		
+		// 初始化MultipartRequest
+		MultipartRequest.init("D:/temp", 900000, "UTF-8");
 	}
 
 	private static Class<?>[] getParameterTypes(Method method) {
@@ -219,7 +227,7 @@ public class CI4JServlet extends HttpServlet {
 
 		Action action = null;
 		String[] args = null;
-		if (StringUtils.isBlank(servletPath)) {
+		if (StringUtils.isBlank(servletPath) || "/".equals(servletPath)) {
 			// 首页
 			action = actionMap.get(URL_SEQ + INDEX_CONTROLLER);
 		} else if (StringUtils.startsWith(servletPath, ASSETS_DIR)) {
@@ -285,6 +293,8 @@ public class CI4JServlet extends HttpServlet {
 					parameters[i] = Float.valueOf((String) args[i]);
 				else if (type == Double.class || type == double.class)
 					parameters[i] = Double.valueOf((String) args[i]);
+				else if (type == MultipartRequest.class) 
+					parameters[i] = new MultipartRequest(request);
 				i++;
 			}
 		}
