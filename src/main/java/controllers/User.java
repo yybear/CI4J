@@ -45,6 +45,7 @@ public class User extends Controller {
 		
 		for(UploadFile file : files) {
 			LogUtils.info(logger, file.getFileName());
+			LogUtils.info(logger, file.getOriginalFileName());
 		}
 	}
 }
