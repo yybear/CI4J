@@ -1,3 +1,3 @@
 CI4J
 ====
-方便php开发人员开发java web项目的开发框架，类似php的CodeIgnite框架
+简单的java web项目的开发框架，类似php问框架CodeIgnite，使用约定大于配置思想
